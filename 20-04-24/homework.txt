@@ -1,0 +1,2 @@
+1. do the homework https://devopsprofmarch.slack.com/archives/C06PNPF0N6R/p1712994729831239 with bash script
+2. ** add as much error handling as you can
