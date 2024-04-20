@@ -1,0 +1,2 @@
+1.create aws rds-mysql instance with aws-cli
+2.create cleanup script for overall cleanup in /cleanup/name_/ directory
