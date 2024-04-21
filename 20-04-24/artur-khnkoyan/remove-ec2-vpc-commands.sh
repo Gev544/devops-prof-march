@@ -16,5 +16,8 @@ aws ec2 delete-internet-gateway --internet-gateway-id $igw_id
 # Deleting the Public Subnet
 aws ec2 delete-subnet --subnet-id $subnet_id
 
+# Deleting Route Table
+aws ec2 delete-route-table --route-table-id $rtb_id
+
 # Deleting the VPC
 aws ec2 delete-vpc --vpc-id $vpc_id
