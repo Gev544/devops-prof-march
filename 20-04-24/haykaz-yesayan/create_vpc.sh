@@ -42,6 +42,8 @@ echo "EC2 Instance ID IS: $aws_ec2_id"
 
 if [ -n "$aws_ec2_id" ]; then
 aws ec2 terminate-instances --instance-ids $aws_ec2_id
+aws ec2 wait instance-terminated --instance-ids $aws_ec2_id
+
     echo "EC2 is terminated"
 
 else
