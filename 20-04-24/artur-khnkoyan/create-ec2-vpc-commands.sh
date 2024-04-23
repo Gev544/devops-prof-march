@@ -12,6 +12,8 @@ else
     exit 1
 fi
 
+# Add tag to the VPC
+aws ec2 create-tags --resources $vpc_id --tags Key=permanent,Value=false
 
 #Creating Public subnet
 echo "Starting to create a Public subnet"
@@ -24,6 +26,9 @@ else
     exit 1
 fi
 
+# Add tag to the subnet
+aws ec2 create-tags --resources $subnet_id --tags Key=permanent,Value=false
+
 
 # Creating Internet Gateway
 echo "Starting to create an Internet Gateway"
@@ -35,6 +40,8 @@ else
     exit 1
 fi
 
+# Add tag to the Internet Gateway
+aws ec2 create-tags --resources $igw_id --tags Key=permanent,Value=false
 
 # Atteching Internet Gateway to VPC
 echo "Starting to attach the Internet Gateway to VPC"
@@ -52,16 +59,20 @@ else
     exit 1
 fi
 
+# Add tag to the Route Table
+aws ec2 create-tags --resources $rtb_id --tags Key=permanent,Value=false
+
+
 aws ec2 create-route --route-table-id $rtb_id --destination-cidr-block 0.0.0.0/0 --gateway-id $igw_id
 
 
 
 ##### LAUNCH INSTANCE INTO SUBNET FOR TESTING #####
-# Create a key pair and output to Test0KeyPair.pem
-aws ec2 create-key-pair --key-name Test0KeyPair --query 'KeyMaterial' --output text > ./Test0KeyPair.pem
+# Create a key pair and output to TestKeyPair.pem
+aws ec2 create-key-pair --key-name TestKeyPair --query 'KeyMaterial' --output text > ./TestKeyPair.pem
 
 # Modifying Permissions
-chmod 400 Test0KeyPair.pem
+chmod 400 TestKeyPair.pem
 
 # Create security group with rule to allow SSH
 echo "Starting to create a Security Group"
@@ -73,10 +84,27 @@ else
     exit 1
 fi
 
+# Add tag to the Security Group
+aws ec2 create-tags --resources $sg_id --tags Key=permanent,Value=false
+
 ## Updateing group-id in the command below:
 aws ec2 authorize-security-group-ingress --group-id $sg_id --protocol tcp --port 22 --cidr 0.0.0.0/0
 
 # Launching instance in public subnet using security group and key pair created previously
-aws ec2 run-instances --image-id ami-080e1f13689e07408 --count 1 --instance-type t2.micro --key-name Test0KeyPair --subnet-id $subnet_id
+aws ec2 run-instances --image-id ami-080e1f13689e07408 --count 1 --instance-type t2.micro --key-name TestKeyPair --subnet-id $subnet_id
+
+# get insctance by VPC id
+instance_id=$(aws ec2 describe-instances --filters Name=vpc-id,Values=$vpcId_val --query 'Reservations[*].Instances[*].InstanceId' --output text)
+
+if [-n "$instance_id"]; then
+    echo "create and run a new instance with id:$instance_id inside new creted VPC succesed"
+else
+    echo "Faild to create and run a new instance inside new creted VPC"
+    exit 1
+fi
+
+# Add tags to the instance
+aws ec2 create-tags --resources $instance_id --tags Key=permanent,Value=false
 
 
+echo "Script Complete!"
