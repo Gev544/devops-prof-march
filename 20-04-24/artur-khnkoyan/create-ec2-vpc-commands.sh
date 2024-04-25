@@ -85,26 +85,28 @@ else
 fi
 
 # Add tag to the Security Group
-aws ec2 create-tags --resources $sg_id --tags Key=permanent,Value=false
+aws ec2 create-tags --resources $sg_id --tags Key=permanent,Value=false Key=for-rds,Value=true
 
-## Updateing group-id in the command below:
+## Updating group-id in the command below:
 aws ec2 authorize-security-group-ingress --group-id $sg_id --protocol tcp --port 22 --cidr 0.0.0.0/0
 
-# Launching instance in public subnet using security group and key pair created previously
-aws ec2 run-instances --image-id ami-080e1f13689e07408 --count 1 --instance-type t2.micro --key-name TestKeyPair --subnet-id $subnet_id
+# Configure inbound rules for the security group to allow inbound traffic to the MySQL port (typically port 3306)
+aws ec2 authorize-security-group-ingress --group-id $sg_id --protocol tcp --port 3306 --cidr 0.0.0.0/0
 
-# get insctance by VPC id
+# Launching instance in public subnet using security group and key pair created previously
+aws ec2 run-instances --image-id ami-080e1f13689e07408 --count 1 --instance-type t2.micro --key-name TestKeyPair --subnet-id $subnet_id --security-group-ids $sg_id --associate-public-ip-address --tag-specifications 'ResourceType=instance,Tags=[{Key=Name,Value=test-instance}]'
+
+# get instance by VPC id
 instance_id=$(aws ec2 describe-instances --filters Name=vpc-id,Values=$vpcId_val --query 'Reservations[*].Instances[*].InstanceId' --output text)
 
 if [-n "$instance_id"]; then
     echo "create and run a new instance with id:$instance_id inside new creted VPC succesed"
 else
-    echo "Faild to create and run a new instance inside new creted VPC"
+    echo "Failed to create and run a new instance inside new created VPC"
     exit 1
 fi
 
 # Add tags to the instance
 aws ec2 create-tags --resources $instance_id --tags Key=permanent,Value=false
-
 
 echo "Script Complete!"
