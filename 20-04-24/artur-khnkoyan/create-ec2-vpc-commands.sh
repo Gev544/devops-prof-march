@@ -99,7 +99,7 @@ aws ec2 run-instances --image-id ami-080e1f13689e07408 --count 1 --instance-type
 # get instance by VPC id
 instance_id=$(aws ec2 describe-instances --filters Name=vpc-id,Values=$vpcId_val --query 'Reservations[*].Instances[*].InstanceId' --output text)
 
-if [-n "$instance_id"]; then
+if [ -n "$instance_id" ]; then
     echo "create and run a new instance with id:$instance_id inside new creted VPC succesed"
 else
     echo "Failed to create and run a new instance inside new created VPC"
