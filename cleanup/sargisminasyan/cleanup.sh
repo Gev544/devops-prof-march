@@ -10,7 +10,8 @@ echo $instance_ids
 # Check if there are any instances to terminate
 if [ -n "$instance_ids" ]; then
     # Terminate instances
-    aws ec2 terminate-instances --instance-ids $instance_ids
+    aws ec2 terminate-instances --instance-ids $instance_ids 
+    aws ec2 wait instance-terminated --instance-ids $instance_ids
 else
     echo "No instances found with tag value not equal to 'permanent=false'."
 fi
@@ -25,6 +26,41 @@ for sg_id in $security_group_ids; do
         # Delete the security group
         aws ec2 delete-security-group --group-id $sg_id
         echo "Security group $sg_id deleted."
+done
+}
+delete_all_routs-from_routh_tabel_by_vpcid(){
+echo "Step 1: Get the Route Table ID(s) associated with the VPC"
+route_table_ids=$(aws ec2 describe-route-tables \
+    --filters "Name=vpc-id,Values=$vpc_id" \
+    --query 'RouteTables[*].RouteTableId' \
+    --output text)
+
+echo " Step 2: For each Route Table ID, get the list of routes and delete them"
+for rt_id in $route_table_ids; do
+    routes=$(aws ec2 describe-route-tables \
+        --route-table-id $rt_id \
+        --query 'RouteTables[*].Routes[?DestinationCidrBlock != `local`].DestinationCidrBlock' \
+        --output text)
+
+echo    "# Step 3: Delete each route from the route table"
+    for route in $routes; do
+        aws ec2 delete-route \
+            --route-table-id $rt_id \
+            --destination-cidr-block $route
+    done
+done
+}
+
+clean_all_subnets(){
+echo " Step 1: Get the Subnet IDs associated with the VPC"
+subnet_ids=$(aws ec2 describe-subnets \
+    --filters "Name=vpc-id,Values=$vpc_id" \
+    --query 'Subnets[*].SubnetId' \
+    --output text)
+
+echo " Step 2: Delete each subnet"
+for subnet_id in $subnet_ids; do
+    aws ec2 delete-subnet --subnet-id $subnet_id
 done
 }
 
@@ -43,11 +79,14 @@ detach_all_internet_gateways_and_remove_those_and_remove_all_vpcs() {
             echo "Internet gateway $igw_id detached from VPC $vpc_id."
             aws ec2 delete-internet-gateway --internet-gateway-id $igw_id
             echo "Internet gateway $igw_id deleted."
-        done
+	    delete_all_routs-from_routh_tabel_by_vpcid
+	done
+	    clean_all_subnets
             aws ec2 delete-vpc --vpc-id $vpc_id
             echo "VPC $vpc_id deleted."
     done
 }
+
 
 # Main cleanup function
 cleanup() {
