@@ -87,12 +87,36 @@ detach_all_internet_gateways_and_remove_those_and_remove_all_vpcs() {
     done
 }
 
+remove_security_group_ids_and_rds(){
+    echo "Step 1: Identify the security group(s) with the specified tag"
+    security_group_ids=$(aws ec2 describe-security-groups \
+        --filters "Name=tag:permanent,Values=false" \
+        --query 'SecurityGroups[*].GroupId' \
+        --output text)
+
+    echo "Step 2: Delete each security group"
+    for sg_id in $security_group_ids; do
+        aws ec2 delete-security-group --group-id $sg_id
+    done
+
+    echo " Step 1: Identify the RDS instance(s) with the specified tag"
+    instance_identifiers=$(aws rds describe-db-instances \
+        --filters "Name=tag:permanent,Values=false" \
+        --query 'DBInstances[*].DBInstanceIdentifier' \
+        --output text)
+
+    echo " Step 2: Delete each RDS instance"
+    for instance_id in $instance_identifiers; do
+        aws rds delete-db-instance --db-instance-identifier $instance_id --skip-final-snapshot
+    done
+}
 
 # Main cleanup function
 cleanup() {
-  cleanup_instances
-  cleanup_security_groups
-  detach_all_internet_gateways_and_remove_those_and_remove_all_vpcs
+	cleanup_instances
+ 	cleanup_security_groups
+ 	detach_all_internet_gateways_and_remove_those_and_remove_all_vpcs
+	remove_security_group_ids_and_rds
 }
 
 # Execute cleanup function
