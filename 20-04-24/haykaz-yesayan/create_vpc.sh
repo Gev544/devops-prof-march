@@ -1,102 +1,60 @@
 #!/bin/bash
+
+set -e
+
 current_date=$(date +"%Y-%m-%d%H:%M:%S")
 
-
-#This function will run if any error and will delete services created before
 cleanup() {
     local error_message="$1"
     local current_date="$2"
     echo "Error occurred: $error_message"
     echo "Starting cleanup!"
 
+    if [ -n "$aws_ec2_id" ]; then
+        aws ec2 terminate-instances --instance-ids "$aws_ec2_id"
+        aws ec2 wait instance-terminated --instance-ids "$aws_ec2_id"
+        echo "EC2 instance $aws_ec2_id terminated"
+    fi
 
+    if [ -n "$security_group_id" ]; then
+        aws ec2 delete-security-group --group-id "$security_group_id"
+        echo "Security group $security_group_id deleted"
+    fi
 
+    if [ -n "$igw_id" ]; then
+        aws ec2 detach-internet-gateway --internet-gateway-id "$igw_id" --vpc-id "$vpc_id"
+        aws ec2 delete-internet-gateway --internet-gateway-id "$igw_id"
+        echo "Internet gateway $igw_id deleted"
+    fi
 
-# Get VPC ID
-vpc_id=$(aws ec2 describe-vpcs --filters "Name=tag:date,Values=$current_date" --query 'Vpcs[0].VpcId' --output text)
-echo "VPC ID IS: $vpc_id"
+    if [ -n "$private_subnet_id" ]; then
+        aws ec2 delete-subnet --subnet-id "$private_subnet_id"
+        echo "Private subnet $private_subnet_id deleted"
+    fi
 
-# Get Public Subnet ID
-public_subnet_id=$(aws ec2 describe-subnets --filters "Name=tag:date,Values=$current_date" --query 'Subnets[0].SubnetId' --output text)
-echo "Public Subnet ID IS: $public_subnet_id"
+    if [ -n "$public_subnet_id" ]; then
+        aws ec2 delete-subnet --subnet-id "$public_subnet_id"
+        echo "Public subnet $public_subnet_id deleted"
+    fi
 
-# Get Private Subnet ID
-private_subnet_id=$(aws ec2 describe-subnets --filters "Name=tag:date,Values=$current_date" --query 'Subnets[1].SubnetId' --output text)
-echo "Private Subnet ID IS: $private_subnet_id"
+    if [ -n "$route_table_id" ]; then
+        aws ec2 delete-route-table --route-table-id "$route_table_id"
+        echo "Route table $route_table_id deleted"
+    fi
 
-# Get Internet Gateway ID
-igw_id=$(aws ec2 describe-internet-gateways --filters "Name=tag:date,Values=$current_date" --query 'InternetGateways[0].InternetGatewayId' --output text)
-echo "Internet Gateway ID IS: $igw_id"
+    if [ -n "$vpc_id" ]; then
+        aws ec2 delete-vpc --vpc-id "$vpc_id"
+        echo "VPC $vpc_id deleted"
+    fi
 
-# Get Route Table ID
-route_table_id=$(aws ec2 describe-route-tables --filters "Name=tag:date,Values=$current_date" --query 'RouteTables[0].RouteTableId' --output text)
-echo "Route Table ID IS: $route_table_id"
-
-# Get Security Group ID
-security_group_id=$(aws ec2 describe-security-groups --filters "Name=tag:date,Values=$current_date" --query 'SecurityGroups[0].GroupId' --output text)
-echo "Security Group ID: $security_group_id"
-
-# Get EC2 Instance ID
-aws_ec2_id=$(aws ec2 describe-instances --filters "Name=tag:date,Values=$current_date" --query 'Reservations[0].Instances[0].InstanceId' --output text)
-echo "EC2 Instance ID IS: $aws_ec2_id"
-
-if [ -n "$aws_ec2_id" ]; then
-aws ec2 terminate-instances --instance-ids $aws_ec2_id
-aws ec2 wait instance-terminated --instance-ids $aws_ec2_id
-
-    echo "EC2 is terminated"
-
-else
-    echo "EC2 Variable is null"
-fi
-if [ -n "$security_group_id" ]; then
-aws ec2 delete-security-group --group-id $security_group_id
-    echo "Security group is deleted"
-
-else
-    echo "SECURITY GROUP Variable is null"
-fi
-if [ -n "$igw_id" ]; then
-aws ec2 detach-internet-gateway --internet-gateway-id $igw_id --vpc-id $vpc_id
-aws ec2 delete-internet-gateway --internet-gateway-id $igw_id
-    echo "IGW is deleted"
-
-else
-    echo "IGW Variable is null"
-fi
-if [ -n "$private_subnet_id" ]; then
-aws ec2 delete-subnet --subnet-id $private_subnet_id
-    echo "Private subnet is deleted"
-
-else
-    echo "PRIVATE SUBNET Variable is null"
-fi
-if [ -n "$public_subnet_id" ]; then
-aws ec2 delete-subnet --subnet-id $public_subnet_id
-    echo "Public subnet is deleted"
-
-else
-    echo "PUBLIC SUBNET Variable is null"
-fi
-if [ -n "$route_table_id" ]; then
-aws ec2 delete-route-table --route-table-id $route_table_id
-    echo "Route table is deleted"
-
-else
-    echo "ROUTE TABLE Variable is null"
-fi
-if [ -n "$vpc_id" ]; then
-aws ec2 delete-vpc --vpc-id $vpc_id
-    echo "VPC is deleted"
-
-else
-    echo "VPC Variable is null"
-fi
-
-
+    # Delete key pair if created
+    if [ -f "keyPair.pem" ]; then
+        rm keyPair.pem
+        echo "Key pair deleted"
+    fi
 }
 
-trap "cleanup \"$BASH_COMMAND\" \"$current_date\"" ERR
+trap 'cleanup "$BASH_COMMAND" "$current_date"' ERR
 
 
 # Creating VPC
@@ -163,5 +121,6 @@ echo "Starting to Lunch an EC2 instance"
 aws_ec2_id=$(aws ec2 run-instances --image-id ami-080e1f13689e07408 --instance-type t2.micro --key-name KeyPairFromShCli --security-group-ids $security_group_id --subnet-id $public_subnet_id --associate-public-ip-address --query 'Instances[0].InstanceId' --output text)
 echo "EC2 lunched succesfully!"
 aws ec2 create-tags --resources $aws_ec2_id --tags Key='date',Value=$current_date
-cleanup "Testing cleanup function" "$current_date"
 
+#TESTING CLEANUP FUNCTION
+cleanup "Testing cleanup function" "$current_date"
