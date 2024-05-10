@@ -4,18 +4,18 @@ if [ -z $VPC_ID ]; then
         echo "No VPC Id provided";
         exit 1;
 fi
+echo "starting to delete VPC with id ${VPC_ID}"
 
 INSTANCE_IDS=$(aws ec2 describe-instances --filters "Name=vpc-id,Values=${VPC_ID}" --query "Reservations[].Instances[].InstanceId" --output text)
-echo "Instance Ids: ${INSTANCE_IDS}"
-echo "Terminating EC2 Instances"
 
 if [ ! -z "$INSTANCE_IDS" ]; then
+    echo "Instance Ids: ${INSTANCE_IDS}"
+    echo "Terminating EC2 Instances"
     aws ec2 terminate-instances --instance-ids $INSTANCE_IDS
+    aws ec2 wait instance-terminated --instance-ids $INSTANCE_IDS
+    echo "All Ec2 Instances are terminated"
 fi
 
-aws ec2 wait instance-terminated --instance-ids $INSTANCE_IDS
-
-echo "All Ec2 Instances are terminated"
 
 SECURITY_GROUP_IDS=$(aws ec2 describe-security-groups --filters "Name=vpc-id,Values=${VPC_ID}" --query "SecurityGroups[].GroupId" --output text)
 
@@ -64,7 +64,7 @@ echo "Deleting Vpc with id ${VPC_ID}"
 aws ec2 delete-vpc --vpc-id $VPC_ID
 
 if [ $? -eq 0 ]; then
-    echo "VPC deleted successfully"
+    echo "VPC with id ${VPC_ID} deleted successfully"
 else
-    echo "Error: Failed to delete VPC"
+    echo "Error: Failed to delete VPC with id ${VPC_ID}"
     fi

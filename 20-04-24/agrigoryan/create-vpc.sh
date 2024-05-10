@@ -1,27 +1,26 @@
 #!/bin/bash/
 
 VPC_ID=$(aws ec2 create-vpc --cidr-block 10.0.0.0/16 --query Vpc.VpcId --output text --tag-specifications "ResourceType=vpc,Tags=[{Key=Name,Value=my-vpc},{Key=Permanent,Value=false}]")
-
 if [ -z $VPC_ID ]; then
 	echo "Error creating VPC";
 	exit;
 fi
 
-PUBLIC_SUBNET_ID=$(aws ec2 create-subnet --vpc-id $VPC_ID --cidr-block 10.0.1.0/24 --availability-zone us-east-1a --query Subnet.SubnetId --output text --tag-specifications 'ResourceType=subnet,Tags=[{Key=Permanent,Value=false}]')
+PUBLIC_SUBNET_ID=$(aws ec2 create-subnet --vpc-id $VPC_ID --cidr-block 10.0.1.0/24 --availability-zone us-east-1a --query Subnet.SubnetId --output text)
 
 if [ -z $PUBLIC_SUBNET_ID ]; then
 	echo "Error creating Public Subnet";
 	exit 1;
 fi
 
-PUBLIC_SUBNET_ID_1=$(aws ec2 create-subnet --vpc-id $VPC_ID --cidr-block 10.0.2.0/24 --availability-zone us-east-1b --query Subnet.SubnetId --output text --tag-specifications 'ResourceType=subnet,Tags=[{Key=Permanent,Value=false}]')
+PUBLIC_SUBNET_ID_1=$(aws ec2 create-subnet --vpc-id $VPC_ID --cidr-block 10.0.2.0/24 --availability-zone us-east-1b --query Subnet.SubnetId --output text)
 
 if [ -z $PUBLIC_SUBNET_ID_1 ]; then
         echo "Error creating Subnet";
         exit 1;
 fi
 
-IGW_ID=$(aws ec2 create-internet-gateway --query InternetGateway.InternetGatewayId --output text --tag-specifications 'ResourceType=internet-gateway,Tags=[{Key=Permanent,Value=false}]')
+IGW_ID=$(aws ec2 create-internet-gateway --query InternetGateway.InternetGatewayId --output text)
 
 if [ -z $IGW_ID ]; then
         echo "Error creating Internet Getaway";
@@ -35,8 +34,8 @@ if [ $? -ne 0 ]; then
 	exit 1;
 fi
 
-ROUTE_TABLE_ID=$(aws ec2 create-route-table --vpc-id $VPC_ID --query RouteTable.RouteTableId --output text --tag-specifications 'ResourceType=route-table,Tags=[{Key=Permanent,Value=false}]')
-  if [ -z $ROUTE_TABLE_ID ]; then
+ROUTE_TABLE_ID=$(aws ec2 create-route-table --vpc-id $VPC_ID --query RouteTable.RouteTableId --output text)
+if [ -z $ROUTE_TABLE_ID ]; then
         echo "Error creating Internet Route Table";
         exit 1;
 fi
@@ -76,8 +75,7 @@ if [ $? -ne 0 ]; then
         exit 1;
 fi
 
-aws ec2 run-instances --image-id ami-080e1f13689e07408 --count 1 --instance-type t2.micro --key-name aws-key1 --security-group-ids $SG_ID --subnet-id $PUBLIC_SUBNET_ID --output text --tag-specifications 'ResourceType=instance,Tags=[{Key=Permanent,Value=false}]'
-
+aws ec2 run-instances --image-id ami-080e1f13689e07408 --count 1 --instance-type t2.micro --key-name aws-key1 --security-group-ids $SG_ID --subnet-id $PUBLIC_SUBNET_ID --output text --tag-specifications
 if [ $? -ne 0 ]; then
         echo "Error creating instance";
         exit 1;
