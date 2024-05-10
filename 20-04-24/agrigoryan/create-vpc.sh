@@ -14,10 +14,10 @@ if [ -z $PUBLIC_SUBNET_ID ]; then
 	exit 1;
 fi
 
-PRIVATE_SUBNET_ID=$(aws ec2 create-subnet --vpc-id $VPC_ID --cidr-block 10.0.2.0/24 --availability-zone us-east-1a --query Subnet.SubnetId --output text --tag-specifications 'ResourceType=subnet,Tags=[{Key=Permanent,Value=false}]')
+PUBLIC_SUBNET_ID_1=$(aws ec2 create-subnet --vpc-id $VPC_ID --cidr-block 10.0.2.0/24 --availability-zone us-east-1b --query Subnet.SubnetId --output text --tag-specifications 'ResourceType=subnet,Tags=[{Key=Permanent,Value=false}]')
 
-if [ -z $PRIVATE_SUBNET_ID ]; then
-        echo "Error creating Private Subnet";
+if [ -z $PUBLIC_SUBNET_ID_1 ]; then
+        echo "Error creating Subnet";
         exit 1;
 fi
 
@@ -36,8 +36,7 @@ if [ $? -ne 0 ]; then
 fi
 
 ROUTE_TABLE_ID=$(aws ec2 create-route-table --vpc-id $VPC_ID --query RouteTable.RouteTableId --output text --tag-specifications 'ResourceType=route-table,Tags=[{Key=Permanent,Value=false}]')
-
-if [ -z $ROUTE_TABLE_ID ]; then
+  if [ -z $ROUTE_TABLE_ID ]; then
         echo "Error creating Internet Route Table";
         exit 1;
 fi
@@ -49,8 +48,15 @@ if [ $? -ne 0 ]; then
         exit 1;
 fi
 
-aws ec2 associate-route-table --route-table-id $ROUTE_TABLE_ID --subnet-id $PUBLIC_SUBNET_ID --output json
+aws ec2 create-route --route-table-id $ROUTE_TABLE_ID --destination-cidr-block 0.0.0.0/0 --gateway-id $IGW_ID --output json
 
+if [ $? -ne 0 ]; then
+        echo "Error creating route";
+        exit 1;
+fi
+
+aws ec2 associate-route-table --route-table-id $ROUTE_TABLE_ID --subnet-id $PUBLIC_SUBNET_ID --output json
+aws ec2 associate-route-table --route-table-id $ROUTE_TABLE_ID --subnet-id $PUBLIC_SUBNET_ID_1  --output json
 if [ $? -ne 0 ]; then
         echo "Error assiociating route table with pblic subnet";
         exit 1;
