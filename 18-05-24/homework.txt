@@ -1,0 +1,5 @@
+1.deploy 2 instances, 1st ubuntu:latest 2nd amazon-linux:latest
+2. configure ssh-config file to connect ti the created instances in point 1.
+3. create insible inventory file which will include 2 instance endpoints
+4. create single ansible playbook which will install nginx on both OSs(apt+yum)
+5. copy simple html file to the OS corresponding path, and reload nginx service(replace nginx default)
