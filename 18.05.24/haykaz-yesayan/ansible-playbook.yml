@@ -1,0 +1,28 @@
+---
+- name: Install nginx on ubuntu and amazon
+  hosts: ubuntu_servers:amazon_servers
+  become: yes
+  tasks:
+    - name: apt-get update
+      apt:
+        update_cache: yes
+      when: ansible_os_family == "Debian"
+
+    - name: apt-get install nginx
+      apt:
+        name: nginx
+        state: present
+      when: ansible_os_family == "Debian"
+
+    - name: yum install nginx
+      dnf:
+        name: nginx
+        state: present
+      when: ansible_os_family == "RedHat"
+
+    - name: start nginx
+      service:
+        name: nginx
+        state: started
+        enabled: yes
+

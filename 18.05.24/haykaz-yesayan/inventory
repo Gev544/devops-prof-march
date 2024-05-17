@@ -1,0 +1,7 @@
+
+[ubuntu_servers]
+ubuntu_host ansible_host=ec2-18-207-218-170.compute-1.amazonaws.com ansible_user=ubuntu
+
+[amazon_servers]
+amazon_host ansible_host=ec2-54-166-21-47.compute-1.amazonaws.com ansible_user=ec2-user
+
