@@ -75,7 +75,7 @@ if [ $? -ne 0 ]; then
         exit 1;
 fi
 
-aws ec2 run-instances --image-id ami-080e1f13689e07408 --count 1 --instance-type t2.micro --key-name aws-key1 --security-group-ids $SG_ID --subnet-id $PUBLIC_SUBNET_ID --output text --tag-specifications
+aws ec2 run-instances --image-id ami-080e1f13689e07408 --count 1 --instance-type t2.micro --key-name aws-key1 --security-group-ids $SG_ID --subnet-id $PUBLIC_SUBNET_ID --associate-public-ip-address --output text
 if [ $? -ne 0 ]; then
         echo "Error creating instance";
         exit 1;
