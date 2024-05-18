@@ -26,3 +26,30 @@
         state: started
         enabled: yes
 
+    - name: Copy custom index.html to Nginx default directory
+      copy:
+        src: updates/index.html
+        dest: /var/www/html/index.html
+        owner: www-data
+        group: www-data
+        mode: '0644'
+      notify: reload nginx
+      when: ansible_os_family == "Debian"
+    
+    - name: Copy custom index.html to Nginx default directory
+      copy:
+        src: updates/index.html
+        dest: /usr/share/nginx/html/index.html
+        owner: www-data
+        group: www-data
+        mode: '0644'
+      notify: reload nginx
+      when: ansible_os_family == "RedHat"
+
+
+  handlers:
+    - name: reload nginx
+      service:
+        name: nginx
+        state: reloaded
+
