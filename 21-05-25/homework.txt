@@ -1,0 +1,3 @@
+1. install terraform on ubuntu
+2. do the homework: https://devopsprofmarch.slack.com/archives/C06PNPF0N6R/p1712994729831239 with terraform
+Note: do not forget to destroy infra after terraform apply
