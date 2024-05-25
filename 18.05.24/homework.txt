@@ -1,0 +1,5 @@
+1. create 2 instances(aws-cli) 1st amazon linux 2nd ubuntu
+2. create ssh-config for newly created VMs
+3. create ansible inventory file for both VMs
+4. create single ansible playbook to install nginx on bot VMs(yum & apt)
+5. create ansible playbook to copy simple html file and replace nginx default one on the server, reload nginx service
