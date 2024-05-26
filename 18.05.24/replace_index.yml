@@ -1,0 +1,27 @@
+---
+- name: Deploy custom HTML to Nginx servers
+  hosts: all
+  become: yes
+  tasks:
+    - name: Copy custom index.html to Nginx root directory on Amazon Linux
+      copy:
+        src: index.html
+        dest: /usr/share/nginx/html/index.html
+      when: ansible_os_family == "RedHat"
+      notify:
+        - Reload Nginx service
+
+    - name: Copy custom index.html to Nginx root directory on Ubuntu
+      copy:
+        src: index.html
+        dest: /var/www/html/index.html
+      when: ansible_os_family == "Debian"
+      notify:
+        - Reload Nginx service
+
+  handlers:
+    - name: Reload Nginx service
+      service:
+        name: nginx
+        state: reloaded
+
