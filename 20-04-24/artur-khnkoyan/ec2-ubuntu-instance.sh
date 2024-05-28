@@ -1,5 +1,8 @@
 #!/bin/bash
 
+trap '../../cleanup/artur-khnkoyan/cleanup.sh' EXIT ERR
+
+
 # Creating VPC
 echo "Starting to create a VPC"
 vpc_id=$(aws ec2 create-vpc --cidr-block 10.0.0.0/16 --query 'Vpc.VpcId' --output text)
@@ -68,11 +71,11 @@ aws ec2 create-route --route-table-id $rtb_id --destination-cidr-block 0.0.0.0/0
 
 
 ##### LAUNCH INSTANCE INTO SUBNET FOR TESTING #####
-# Create a key pair and output to TestKeyPair.pem
-aws ec2 create-key-pair --key-name TestKeyPair --query 'KeyMaterial' --output text > ./TestKeyPair.pem
+# Create a key pair and output to InstanceKeyPair.pem
+aws ec2 create-key-pair --key-name InstanceKeyPair --query 'KeyMaterial' --output text > ./InstanceKeyPair.pem
 
 # Modifying Permissions
-chmod 400 TestKeyPair.pem
+chmod 400 InstanceKeyPair.pem
 
 # Create security group with rule to allow SSH
 echo "Starting to create a Security Group"
@@ -94,7 +97,7 @@ aws ec2 authorize-security-group-ingress --group-id $sg_id --protocol tcp --port
 aws ec2 authorize-security-group-ingress --group-id $sg_id --protocol tcp --port 3306 --cidr 0.0.0.0/0
 
 # Launching instance in public subnet using security group and key pair created previously
-aws ec2 run-instances --image-id ami-080e1f13689e07408 --count 1 --instance-type t2.micro --key-name TestKeyPair --subnet-id $subnet_id --security-group-ids $sg_id --associate-public-ip-address --tag-specifications 'ResourceType=instance,Tags=[{Key=Name,Value=test-instance}]'
+aws ec2 run-instances --image-id ami-080e1f13689e07408 --count 1 --instance-type t2.micro --key-name InstanceKeyPair --subnet-id $subnet_id --security-group-ids $sg_id --associate-public-ip-address --tag-specifications 'ResourceType=instance,Tags=[{Key=Name,Value=test-instance}]'
 
 # get instance by VPC id
 instance_id=$(aws ec2 describe-instances --filters Name=vpc-id,Values=$vpcId_val --query 'Reservations[*].Instances[*].InstanceId' --output text)
