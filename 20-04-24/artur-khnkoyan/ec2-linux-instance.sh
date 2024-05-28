@@ -1,6 +1,6 @@
 #!/bin/bash
 
-trap '../../cleanup/artur-khnkoyan' EXIT ERR
+trap '../../cleanup/akhnkoyan' EXIT ERR
 
 # Creating VPC
 echo "Starting to create a VPC"
