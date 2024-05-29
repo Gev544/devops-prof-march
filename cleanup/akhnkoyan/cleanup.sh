@@ -1,7 +1,20 @@
 #!/bin/bash
 
 echo "Cleanup started!"
-#clean up all EC2 instances which not contains "permanent=false"
+#clean up all resources which not contains "permanent=true"
+
+# Function to remove RDS instances with tag key 'permanent' when the value is 'false'
+cleanup_rds_instances() {
+  rds_instances=$(aws rds describe-db-instances --filters "Name=tag:permanent,Values=false" --query 'DBInstances[*].DBInstanceIdentifier' --output text)
+for rds_instance in $rds_instances; do
+    echo "Removing RDS instance: $rds_instance"
+    aws rds delete-db-instance --db-instance-identifier $rds_instance --skip-final-snapshot
+    aws rds wait db-instance-deleted --db-instance-identifier $rds_instance
+    echo "Removed RDS instance: $rds_instance"
+done
+}
+
+
 # Function to remove EC2 instances with tag key 'permanent' when the value is 'false'
 cleanup_instances() {
 echo "Removing instances with tag key 'permanent' when the value is 'false'..."
@@ -11,6 +24,7 @@ echo $instance_ids
 if [ -n "$instance_ids" ]; then
     # Terminate instances
     aws ec2 terminate-instances --instance-ids $instance_ids
+    aws ec2 wait instance-terminated --instance-ids $instance_ids
 else
     echo "No instances found with tag value not equal to 'permanent=false'."
 fi
@@ -70,6 +84,7 @@ detach_all_internet_gateways_and_remove_those_and_remove_all_vpcs() {
 
 # Main cleanup function
 cleanup() {
+  cleanup_rds_instances
   cleanup_instances
   cleanup_security_groups
   detach_all_internet_gateways_and_remove_those_and_remove_all_vpcs

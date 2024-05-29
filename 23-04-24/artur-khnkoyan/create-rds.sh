@@ -1,6 +1,10 @@
 #!/bin/bash
 
-echo "Script started!"
+
+echo "Script Started!"
+# Create security group for rds and open 3306 port
+../../20-04-24/artur-khnkoyan/ec2-ubuntu-instance.sh
+
 # Get Security Group with tag key 'for-rds'
 sg_id=$(aws ec2 describe-security-groups --filters "Name=tag:for-rds,Values=true" --query 'SecurityGroups[*].GroupId' --output text)
 echo "Security group ID: $sg_id"
@@ -17,5 +21,6 @@ aws rds create-db-instance \
    --vpc-security-group-ids sg_id \
    --port 3306 \
    --engine-version 8.0.36
-   
-"Script Completed!"
+
+
+echo "Script Completed!"
