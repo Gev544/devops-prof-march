@@ -21,6 +21,8 @@ aws rds create-db-instance \
    --vpc-security-group-ids sg_id \
    --port 3306 \
    --engine-version 8.0.36
+   --tags Key="permanent",Value="false"
+
 
 
 echo "Script Completed!"
