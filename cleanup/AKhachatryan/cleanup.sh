@@ -59,6 +59,32 @@ delete_internet_gateways() {
     fi
 }
 
+# Function to delete route tables
+delete_route_tables() {
+    echo "Deleting route tables..."
+    route_table_ids=$(aws ec2 describe-route-tables --query 'RouteTables[?Tags[?Key!=`permanent`]].RouteTableId' --output text)
+    if [ -n "$route_table_ids" ]; then
+        for route_table_id in $route_table_ids; do
+            aws ec2 delete-route-table --route-table-id $route_table_id || handle_error "Failed to delete route table $route_table_id."
+        done
+    else
+        echo "No route tables found to delete."
+    fi
+}
+
+# Function to delete security groups
+delete_security_groups() {
+    echo "Deleting security groups..."
+    security_group_ids=$(aws ec2 describe-security-groups --query 'SecurityGroups[?Tags[?Key!=`permanent`]].GroupId' --output text)
+    if [ -n "$security_group_ids" ]; then
+        for sg_id in $security_group_ids; do
+            aws ec2 delete-security-group --group-id $sg_id || handle_error "Failed to delete security group $sg_id."
+        done
+    else
+        echo "No security groups found to delete."
+    fi
+}
+
 # Function to delete RDS instances
 delete_rds_instances() {
     echo "Deleting RDS instances..."
@@ -81,6 +107,7 @@ delete_ec2_instances
 delete_network_resources
 delete_subnets
 delete_internet_gateways
+delete_route_tables
+delete_security_groups
 delete_rds_instances
-
 echo "Cleanup completed successfully."
