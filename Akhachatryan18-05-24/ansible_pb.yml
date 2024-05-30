@@ -1,0 +1,42 @@
+---
+- name: Install nginx on ubuntu and amazon
+  hosts: ubuntu_servers:amazon_servers
+  become: yes
+  tasks:
+    - name: Update package cache (Debian)
+      apt:
+        update_cache: yes
+      when: ansible_os_family == "Debian"
+
+    - name: Install Nginx (Debian)
+      package:
+        name: nginx
+        state: present
+      when: ansible_os_family == "Debian"
+
+    - name: Install Nginx (RedHat)
+      package:
+        name: nginx
+        state: present
+      when: ansible_os_family == "RedHat"
+
+    - name: Start nginx
+      service:
+        name: nginx
+        state: started
+        enabled: yes
+
+    - name: Copy custom index.html to Nginx default directory
+      copy:
+        src: www/index.html
+        dest: "{{ '/var/www/html/index.html' if ansible_os_family == 'Debian' else '/usr/share/nginx/html/index.html' }}"
+        owner: www-data
+        group: www-data
+        mode: '0644'
+      notify: reload nginx
+
+  handlers:
+    - name: reload nginx
+      service:
+        name: nginx
+        state: reloaded
